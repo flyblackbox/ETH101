@@ -36,7 +36,7 @@ contract Remitance(uint fee) {
     event LogSend(address origin, address destination, uint deadlineBlock, bytes32 keyHash);
     event LogCollect(bytes32 keyHash);
     event LogRefund(bytes32 keyHash);
-    event LogKillSwitch(string _msg);
+    event LogKillSwitch();
 
 //Restrict functions to the contract owner
     modifier restricted() {
@@ -60,7 +60,7 @@ contract Remitance(uint fee) {
                                         });
 
             feeBalance += fee;
-            LogSend(msg.sender, dest, deadline, keyHash, "Transaction initiated");
+            LogSend(msg.sender, dest, deadline, keyHash);
 
             return true;
     }
@@ -143,14 +143,14 @@ contract Remitance(uint fee) {
 		remittanceBook[keyHash].amount = 0;
 //prefer transfer below? Instead of: if(!msg.sender.send(remitanceBook[keyHash].amount)) revert();
 		msg.sender.transfer(remittanceBook[keyHash].amount);
-		LogRefund(keyHash, "Refund complete");
+		LogRefund(keyHash);
 		return true;
     }
 
     function killSwitch()
         public
         restricted {
-        LogKillSwitch("Contract killed");
+        LogKillSwitch();
         selfdestruct(owner);
     }
 

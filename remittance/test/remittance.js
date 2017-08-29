@@ -1,3 +1,31 @@
+import "truffle/Assert.sol";
+import "truffle/DeployedAddresses.sol";
+import "../contracts/Remittance.sol";
+const Remittance = artifacts.require("./Remittance.sol");
+
+contract('Remittance', function(accounts){
+
+  address owner;
+  uint fee;
+  uint feeBalance;
+  bytes32 keyHash;
+  
+  var contract;
+  var goal = 1000;
+  var duration = 10;
+  var owner = accounts[0];
+
+
+  beforeEach (function() {
+    return Campaign.new(duration, goal, {from: owner})
+    .then(function(instance){
+      contract = instance;
+    });
+  });
+
+  it("should X", function() {
+    assert.strictEqual (true, true, "Something is wrong.");
+
 it("should do something and something else", function() {
     var instance;
     // You *need to return* the whole Promise chain
@@ -19,4 +47,11 @@ it("should do something and something else", function() {
         });
 
         //Add a test that calls split() and compares the before and after balances of Bob and Carol
+});
+
+it(“should have a deadline”, function(){
+	return contract.deadline({from: owner})
+	.then(function(_deadline) {
+	assert.equal(_deadline).toString(10), expectedDeadline, “Deadline is incorrect”);
+	});
 });

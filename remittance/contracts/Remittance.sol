@@ -1,39 +1,71 @@
 pragma solidity ^0.4.6;
 
-contract Remitance {
+contract Owner() {
+  function Owner() {
+      owner = tx.origin;
+  }
+}
+
+contract Remitance(uint fee) {
 
     address owner;
     uint fee;
     uint feeBalance;
+    bytes32 keyHash;
 
+//Establish the owner, the fee, and the starting balance
+    function Remittance(uint feeAmount) {
+        owner = Owner.owner;
+        fee = feeAmount;
+        feeBalance = 0;
+    }
+
+//Create a struct to keep track of participants and critical details
     struct TransactionStruct {
         address origin; // Alice
         address destination; // Carol
         uint amount;
         uint deadlineBlock;
-        bool hasDeadline;
-        bool exists;
+        //bool hasDeadline; Assume a deadline
     }
 
-    mapping(bytes32 => TransactionStruct) remitanceBook;
+    mapping(bytes32 => TransactionStruct) remittanceBook;
 
-    event LogSetFees(uint newFee, string _msg);
-    event LogWithdrawFees(uint balance, string _msg);
-    event LogSend(address origin, address destination, uint deadlineBlock, bytes32 keyHash, string _msg);
-    event LogCollect(bytes32 keyHash, string _msg);
-    event LogRefund(bytes32 keyHash, string _msg);
+    event LogSetFees(uint newFee);
+    event LogWithdrawFees(uint balance);
+    event LogSend(address origin, address destination, uint deadlineBlock, bytes32 keyHash);
+    event LogCollect(bytes32 keyHash);
+    event LogRefund(bytes32 keyHash);
     event LogKillSwitch(string _msg);
 
+//Restrict functions to the contract owner
     modifier restricted() {
         if (msg.sender == owner) _;
     }
 
-    function Remitance(uint feeAmount) {
-        owner = msg.sender;
-        fee = feeAmount;
-        feeBalance = 0;
+    function send(address destination, uint deadline)
+        public
+        payable
+        returns(bool) {
+    //Require the transaction to have a value, greater than the fee set.
+            require(msg.value > fee);
+
+            require(!remittanceBook[keyHash].amount = 0);
+            remittanceBook[keyHash] = TransactionStruct({
+                                        origin: msg.sender,
+                                        destination: destination,
+                                        amount: msg.value - fee,
+                                        deadlineBlock: block.number + deadline,
+                    //Deadline assumed  hasDeadline: deadline > 0,
+                                        });
+
+            feeBalance += fee;
+            LogSend(msg.sender, dest, deadline, keyHash, "Transaction initiated");
+
+            return true;
     }
 
+//Set the fee upon deployment, or change while live via public function
     function setFee(uint newFee)
         public
         restricted
@@ -43,109 +75,77 @@ contract Remitance {
         return true;
     }
 
+//Receive two passwords as inputs, hash them, and then has their hashes to create a keyHash
+    function setPasswords(bytes32 firstPassword, bytes32 secondPassword) {
+        keyHash = keccak256(firstPassword, secondPassword);
+    }
+
+
+//The public can see how much the owner has left in the contract to be collected
     function checkAccumulatedFees()
         public
         constant
         returns(uint){
         return feeBalance;
     }
+}
 
+//Only the owner can withdraw the fees collected
     function withdrawAccumulatedFees()
         public
         restricted
         returns(bool) {
-
 		uint amount = feeBalance;
-		feeBalance = 0;
 
-		LogWithdrawFees(amount, "Fees have been withdrawn");
+//If this is not the owner, revert. Otherwise send, reset the fee balance and log.
+  		if(!owner.send(amount)) revert();
 
-		if(!owner.send(amount)) revert();
-        return true;
+      feeBalance = 0;
+      LogWithdrawFees(amount);
+      return true;
     }
 
-    function send(address dest, uint deadline, bytes32 pwd1Hash, bytes32 pwd2Hash)
-        public
-        payable
-        returns(bool) {
-
-            require(msg.value > fee);
-
-            bytes32 keyHash = calculateCombinedHash(pwd1Hash, pwd2Hash);
-
-            require(!remitanceBook[keyHash].exists);
-
-            remitanceBook[keyHash] = TransactionStruct({
-                                        origin: msg.sender,
-                                        destination: dest,
-                                        amount: msg.value - fee,
-                                        deadlineBlock: block.number + deadline,
-                                        hasDeadline: deadline > 0,
-                                        exists: true
-                                        });
-
-            feeBalance += fee;
-            LogSend(msg.sender, dest, deadline, keyHash, "Transaction initiated");
-
-            return true;
-    }
-
-    function calculateCombinedHash(bytes32 pwd1Hash, bytes32 pwd2Hash)
-        constant
-        returns(bytes32) {
-        return keccak256(pwd1Hash, pwd2Hash);
-    }
-
-    function checkRemitanceBalance(bytes32 pwd1Hash, bytes32 pwd2Hash)
+    function checkRemitanceBalance(bytes32 firstPassword, bytes32 secondPassword)
         constant
         returns(uint){
-            bytes32 keyHash = calculateCombinedHash(pwd1Hash, pwd2Hash);
-            return remitanceBook[keyHash].amount;
+            keyHash = keccak256(firstPassword, secondPassword);
+            return remittanceBook[keyHash].amount;
     }
 
-    function collect(bytes32 pwd1Hash, bytes32 pwd2Hash)
+    function collect(bytes32 firstPassword, bytes32 secondPassword)
         public
         returns(bool){
 
-        bytes32 keyHash = calculateCombinedHash(pwd1Hash, pwd2Hash);
+        keyHash = keccak256(firstPassword, secondPassword);
 
-        require(remitanceBook[keyHash].destination == msg.sender &&
-                remitanceBook[keyHash].amount > 0 &&
-                remitanceBook[keyHash].exists
+        require(remittanceBook[keyHash].destination == msg.sender &&
+                remittanceBook[keyHash].amount > 0 &&
                 );
 
-        remitanceBook[keyHash].amount = 0;
-		//if(!msg.sender.send(remitanceBook[keyHash].amount)) revert(); prefer transfer below?
-		msg.sender.transfer(remitanceBook[keyHash].amount);
+        remittanceBook[keyHash].amount = 0;
+    //if(!msg.sender.send(remitanceBook[keyHash].amount)) revert(); prefer transfer below?
+    msg.sender.transfer(remittanceBook[keyHash].amount);
 
-		LogCollect(keyHash, "Fee collected");
-		return true;
-    }
+    LogCollect(keyHash);
+    return true;
 
-    function refund(bytes32 pwd1Hash, bytes32 pwd2Hash)
+//Refund owner if ether isn't claimed
+    function refund()
         returns(bool){
 
-        bytes32 keyHash = calculateCombinedHash(pwd1Hash, pwd2Hash);
-
-        require(remitanceBook[keyHash].origin == msg.sender &&
-                remitanceBook[keyHash].amount > 0 &&
-                remitanceBook[keyHash].exists
+//Require
+        require(remittanceBook[keyHash].origin == msg.sender &&
+                remittanceBook[keyHash].amount > 0 &&
                 );
 
-        if(remitanceBook[keyHash].hasDeadline){
-            require(block.number > remitanceBook[keyHash].deadlineBlock);
-        }
-
-		remitanceBook[keyHash].amount = 0;
-
-
-		//if(!msg.sender.send(remitanceBook[keyHash].amount)) revert(); prefer transfer below?
-		msg.sender.transfer(remitanceBook[keyHash].amount);
-
+      //Deadline is assumed  if(remittanceBook[keyHash].hasDeadline){}
+        require(block.number > remittanceBook[keyHash].deadlineBlock);
+		remittanceBook[keyHash].amount = 0;
+//prefer transfer below? Instead of: if(!msg.sender.send(remitanceBook[keyHash].amount)) revert();
+		msg.sender.transfer(remittanceBook[keyHash].amount);
 		LogRefund(keyHash, "Refund complete");
 		return true;
     }
-
 
     function killSwitch()
         public

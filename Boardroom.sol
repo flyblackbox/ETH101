@@ -1,3 +1,7 @@
+//Finish challenge function
+//Allow voting only once per member per proposals
+//
+
 pragma solidity ^0.4.6;
 
 contract Owner() {
@@ -11,8 +15,6 @@ contract Owner() {
 contract Boardroom is Owner {
 
   function Boardroom{
-    //declare member types (Founder, co-founder, employee1, employee2, investor)
-    //declare types voting weight
 
   }
 
@@ -25,6 +27,7 @@ contract Boardroom is Owner {
        uint voteWeight;         //How much the member's vote is worth
        uint[] membersProposals; //Proposals proposed by the member, array of proposalHashes
        uint[] memberVotes;      //Array to keep track of member's votes object {proposalHash, voteTypeUpOrDown}
+
    }
 
    struct Proposal {
@@ -56,9 +59,9 @@ contract Boardroom is Owner {
    }*/
 
    //Creates a new member, must be executed by owner. Member must be in same room as owner to enter password without revealing.
-   function addMember(bytes32 _memberName, address _memberAddress, bytes32 _password, uint _voteWeight)
+   function addMember(bytes32 _memberName, address _memberAddress, bytes32 _memberPassword, uint _voteWeight)
         isOwner(){
-          passwordHash keccak256(_password,  _memberAddress)
+          passwordHash keccak256(_memberPassword,  _memberAddress)
           boardMembers[passwordHash] = BoardMember({
                                           memberAddress: _memberAddress,
                                           memberName: _memberName,
@@ -68,12 +71,19 @@ contract Boardroom is Owner {
                                       })};
    }
 
+   //Owner can change weight of members
+   function changeVoteWeight(uint newVoteWeight, address _memberAddress, bytes32 _membersPassword) //Weight change must be mutually agreed. Member must provide password to change their weight.
+        isOwner(){
+          passwordHash keccak256(_memberAddress,  _membersPassword);
+          boardMembers[passwordHash].voteWeight = newVoteWeight;
+   }
+
    //Submit a proposal to the board
    function propose(bytes32 _proposal, bytes32 _password, uint deadline) //User inputs text for the proposal when calling this function as well as their password, and the number of blocks until deadline
         isMember(){
           passwordHash = keccak256(_password, msg.sender)
           require(keccak256(_proposal) != proposals[keccak256(_proposal)].proposalText) //Require that this exact proposal does not already exist
-          proposals[keccak256(_proposal)] = Proposal({
+          proposals[keccak256(_proposal, msg.sender)] = Proposal({
                                             memberAddress: msg.sender,
                                             memberName: Boardmember[passwordHash].memberName,
                                             deadlineBlock: block.number + deadline,
@@ -84,9 +94,10 @@ contract Boardroom is Owner {
 
    //vote yes or no to a proposal
    function vote(_proposal, _password, voteTypeTrueUpFalseDown){
-
-        uint voteWeight;
         passwordHash = keccak256(_password, msg.sender);
+        /*If approved proposal has less points than a late contrarian vote, initiate challenge, which re-opens voting*/
+        require(Proposal[keccak256(_proposal)].approved != true)
+        /*Require only one vote per member per proposal*/
         if(!voteTypeTrueUpFalseDown){
             voteWeight += boardMembers[passwordHash].voteWeight * -1;
             proposals[_proposal].noVotes.push(msg.sender);
@@ -94,11 +105,11 @@ contract Boardroom is Owner {
             voteWeight += boardMembers[passwordHash].voteWeight;
             proposals[_proposal].yesVotes.push(msg.sender);
         }
-
    }
+
    function challenge(){
-     //Put a resolved proposal back on the table
-     //Maybe restricted to members who have more weight than proposal.score?
+     //Put a resolved proposal back on the table for another vote
+     //Restrict to members who have more weight than proposal.score?
      LogChallenge()
    }
 

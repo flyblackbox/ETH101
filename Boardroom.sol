@@ -1,15 +1,10 @@
-//* To Do *//
-//Complete challenge function to reopen resolved proposals
-
-
-
 pragma solidity ^0.4.6;
 
 contract Owner() {
   address owner;
 
   function Owner() {
-      owner = tx.origin;
+      owner = msg.sender;
   }
 }
 
@@ -42,24 +37,25 @@ contract Boardroom is Owner {
         bool challenged;        //Reopened for vote by someone with more weight than final for/against score
         address[] yesVotes;     //Who voted up
         address[] noVotes;      //Who voted down
-        uint points;            //What is the total score
+        uint score;            //What is the total score
 
     }
 
    event LogProposal(bytes32 proposalText, bytes32 proposalHash, address memberName, address memberAddress);
    event LogVote(address member, bytes32 proposalHash, bool voteType);
    event LogRejected(uint balance);
-
-
-   modifier isMember() {
-        if (msg.sender == owner) _;
-   }
+   event LogChallenge();
 
    modifier isOwner() {
         require(msg.sender == owner)
    }
 
-   //Creates a new member, but must be executed by owner. Member must be in same room as owner to enter password without revealing.
+   /* How can I determine if a user is a member?
+   modifier isMember() {
+        if (msg.sender == boardMember[???]) _;
+   }*/
+
+   //Creates a new member, must be executed by owner. Member must be in same room as owner to enter password without revealing.
    function addMember(bytes32 _memberName, address _memberAddress, bytes32 _password, uint _voteWeight)
         isOwner(){
           passwordHash keccak256(_password,  _memberAddress)
@@ -72,8 +68,8 @@ contract Boardroom is Owner {
                                       })};
    }
 
-
-   function propose(bytes32 _proposal, bytes32 _password, uint deadline) //User inputs text for a proposal when calling this function as well as their password, and the number of blocks until deadline
+   //Submit a proposal to the board
+   function propose(bytes32 _proposal, bytes32 _password, uint deadline) //User inputs text for the proposal when calling this function as well as their password, and the number of blocks until deadline
         isMember(){
           passwordHash = keccak256(_password, msg.sender)
           require(keccak256(_proposal) != proposals[keccak256(_proposal)].proposalText) //Require that this exact proposal does not already exist
@@ -86,8 +82,9 @@ contract Boardroom is Owner {
           BoardMember[passwordHash].membersProposals.push(proposals[keccak256(_proposal])
    }
 
+   //vote yes or no to a proposal
    function vote(_proposal, _password, voteTypeTrueUpFalseDown){
-     //vote yes or no to a proposal
+
         uint voteWeight;
         passwordHash = keccak256(_password, msg.sender);
         if(!voteTypeTrueUpFalseDown){
@@ -97,10 +94,12 @@ contract Boardroom is Owner {
             voteWeight += boardMembers[passwordHash].voteWeight;
             proposals[_proposal].yesVotes.push(msg.sender);
         }
+
    }
    function challenge(){
-     //vote yes or no to a proposal
+     //Put a resolved proposal back on the table
+     //Maybe restricted to members who have more weight than proposal.score?
+     LogChallenge()
    }
 
-
-}//Closing contract
+}

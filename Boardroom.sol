@@ -41,7 +41,7 @@ contract Boardroom is Owner {
        uint voteWeight;             //How much the member's vote is worth
        uint[] membersProposals;     //Proposals proposed by the member, array of proposalHashes
        uint[] memberVotes;          //Array to keep track of member's votes object {proposalHash, voteTypeUpOrDown}
-       uint256 voteHistory;         //Map to keep track of all proposals voted on by key proposalHash. True = voted.
+       //uint256 voteHistory;         //Map to keep track of all proposals voted on by key proposalHash. True = voted.
     }
     
     struct Proposal {
@@ -82,8 +82,8 @@ contract Boardroom is Owner {
                 uint256 memberPassword, 
                 uint    voteWeight)
             isOwner(){
-                uint passwordHash;
-    
+                bytes32 passwordHash;
+                //mapping(bytes32 => VoteHistory) voteHistory;
                 passwordHash = keccak256 (memberPassword, memberAddress);
                 boardMembers[passwordHash] = BoardMember({
                                               memberAddress: memberAddress,
@@ -91,13 +91,14 @@ contract Boardroom is Owner {
                                               amount: msg.value,
                                               passwordHash: passwordHash,
                                               voteWeight: voteWeight
+                                              //voteHistory: 
                                              });
                 //Add this member to the board members array.                          
                 boardMembersArray.push(boardMembers[passwordHash].memberAddress);
         }
 
-//Owner can change weight of members, but member must consent.
-//Member must provide password in person to change their weight.
+    //Owner can change weight of members, but member must consent.
+    //Member must provide password in person to change their weight.
    function changeVoteWeight(uint newVoteWeight, address _memberAddress, bytes32 _membersPassword)
         isOwner(){
         bytes32 passwordHash;
@@ -117,12 +118,18 @@ contract Boardroom is Owner {
                                                         memberAddress: msg.sender,
                                                         memberName: boardMembers[passwordHash].memberName,
                                                         deadlineBlock: block.number + deadline,
-                                                        proposalText: proposal
-                                                        });
-        BoardMember[passwordHash].membersProposals.push(proposals[keccak256(proposal)]);
+                                                        proposalText: proposal,
+                                                        proposalHash: passwordHash,
+                                                        approved: false,
+                                                        challenged: false,
+                                                        yesVotes: boardMembers[passwordHash].voteWeight,
+                                                        noVotes: 0
+                                                        }
+        //Track proposal keys in an array.
+        //BoardMember[passwordHash].membersProposals.push(proposals[keccak256(proposal)]);
+
+        });
     }
-
-
 
 
     //vote yes or no to a proposal
@@ -140,8 +147,6 @@ contract Boardroom is Owner {
             voteWeight += boardMembers[passwordHash].voteWeight;
             proposals[proposal].yesVotes.push(msg.sender);
         }
-        
-        
     }
 
     //Put a resolved proposal back on the table for another vote
@@ -151,7 +156,5 @@ contract Boardroom is Owner {
      require(msg.sender);
      LogChallenge();
     }
-
-
 
 }

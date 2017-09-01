@@ -1,10 +1,19 @@
+/* Boardroom Contract for Organizational Governance
+//This script is meant to facilitate company decision making.
+  +Board members can submit proposals with a deadline, and all other members can vote to accept or reject.
+  +If the proposal's score is positive when the deadline hits, it is archived as a company policy.
+  +If the proposal's score is negative, it is rejected and archived.
+  +Board members can challenge a decision after the deadline is reached to force a revote.
+  +Each board member will have a voting weight which determines how many points they are able to commit to the proposal.
+
+To Do:
 //Finish challenge function
-//Allow voting only once per member per proposals
-//
+//Only allow challenge when remaining vote weight outweighs difference
+//Allow voting until weight vote is expired for that proposal*/
 
 pragma solidity ^0.4.6;
 
-contract Owner() {
+contract Owner {
   address owner;
 
   function Owner() {
@@ -13,24 +22,29 @@ contract Owner() {
 }
 
 contract Boardroom is Owner {
+    address[] boardMembersArray; //Keep all boardmembers addresses in an array, in order of when they were added.
 
-  function Boardroom{
+    function Boardroom(){
+        boardMembersArray.push(msg.sender);
 
-  }
+    }
+      //Keep track of your BoardMembers in a Struct. Key is the hash of sender address & password.
+    mapping(bytes32 => BoardMember) boardMembers;
+    
+    //Keep track of all the proposals. Key is the text of the proposal & the sender address.
+    mapping(bytes32 => Proposal) proposals;
+    
 
-  mapping(bytes32 => BoardMember) boardMembers;
-  mapping(bytes32 => Proposal) proposals;
-
-  struct BoardMember {
-       address memberAddress;   //Member's address
-       bytes32 memberName;      //Member's name
-       uint voteWeight;         //How much the member's vote is worth
-       uint[] membersProposals; //Proposals proposed by the member, array of proposalHashes
-       uint[] memberVotes;      //Array to keep track of member's votes object {proposalHash, voteTypeUpOrDown}
-
-   }
-
-   struct Proposal {
+    struct BoardMember {
+       address memberAddress;       //Member's address
+       bytes32 memberName;          //Member's name
+       uint voteWeight;             //How much the member's vote is worth
+       uint[] membersProposals;     //Proposals proposed by the member, array of proposalHashes
+       uint[] memberVotes;          //Array to keep track of member's votes object {proposalHash, voteTypeUpOrDown}
+       uint256 voteHistory;         //Map to keep track of all proposals voted on by key proposalHash. True = voted.
+    }
+    
+    struct Proposal {
         bytes32 proposalText;   //Text of proposal
         address memberAddress;  // Member who proposed address
         address memberName;     // Member who proposed name
@@ -40,77 +54,104 @@ contract Boardroom is Owner {
         bool challenged;        //Reopened for vote by someone with more weight than final for/against score
         address[] yesVotes;     //Who voted up
         address[] noVotes;      //Who voted down
-        uint score;            //What is the total score
-
+        uint score;             //What is the total score
     }
+    
+    
+    event LogProposal(bytes32 proposalText, bytes32 proposalHash, address memberName, address memberAddress);
+    event LogVote(address member, bytes32 proposalHash, bool voteType);
+    event LogRejected(uint balance);
+    event LogChallenge();
+    
+    modifier isOwner() {
+        require(msg.sender == owner);
+        _;
+    }
+    
+    /* Trying to solve error on
+    function injectHash (memberPassword, memberAddress)
+                returns (uint256) {
+                return keccak256(memberPassword,  memberAddress);
+                }*/
+    
+    //Creates a new member, must be executed by owner. 
+    //Member must be in same room as owner to enter password without revealing.
+    function addMember(
+                bytes32 memberName, 
+                address memberAddress, 
+                uint256 memberPassword, 
+                uint    voteWeight)
+            isOwner(){
+                uint passwordHash;
+    
+                passwordHash = keccak256 (memberPassword, memberAddress);
+                boardMembers[passwordHash] = BoardMember({
+                                              memberAddress: memberAddress,
+                                              memberName: memberName,
+                                              amount: msg.value,
+                                              passwordHash: passwordHash,
+                                              voteWeight: voteWeight
+                                             });
+                //Add this member to the board members array.                          
+                boardMembersArray.push(boardMembers[passwordHash].memberAddress);
+        }
 
-   event LogProposal(bytes32 proposalText, bytes32 proposalHash, address memberName, address memberAddress);
-   event LogVote(address member, bytes32 proposalHash, bool voteType);
-   event LogRejected(uint balance);
-   event LogChallenge();
-
-   modifier isOwner() {
-        require(msg.sender == owner)
-   }
-
-   /* How can I determine if a user is a member?
-   modifier isMember() {
-        if (msg.sender == boardMember[???]) _;
-   }*/
-
-   //Creates a new member, must be executed by owner. Member must be in same room as owner to enter password without revealing.
-   function addMember(bytes32 _memberName, address _memberAddress, bytes32 _memberPassword, uint _voteWeight)
+//Owner can change weight of members, but member must consent.
+//Member must provide password in person to change their weight.
+   function changeVoteWeight(uint newVoteWeight, address _memberAddress, bytes32 _membersPassword)
         isOwner(){
-          passwordHash keccak256(_memberPassword,  _memberAddress)
-          boardMembers[passwordHash] = BoardMember({
-                                          memberAddress: _memberAddress,
-                                          memberName: _memberName,
-                                          amount: msg.value,
-                                          passwordHash: passwordHash,
-                                          voteWeight: _voteWeight
-                                      })};
-   }
-
-   //Owner can change weight of members
-   function changeVoteWeight(uint newVoteWeight, address _memberAddress, bytes32 _membersPassword) //Weight change must be mutually agreed. Member must provide password to change their weight.
-        isOwner(){
-          passwordHash keccak256(_memberAddress,  _membersPassword);
+        bytes32 passwordHash;
+          passwordHash = keccak256(_memberAddress,  _membersPassword);
           boardMembers[passwordHash].voteWeight = newVoteWeight;
    }
 
-   //Submit a proposal to the board
-   function propose(bytes32 _proposal, bytes32 _password, uint deadline) //User inputs text for the proposal when calling this function as well as their password, and the number of blocks until deadline
-        isMember(){
-          passwordHash = keccak256(_password, msg.sender)
-          require(keccak256(_proposal) != proposals[keccak256(_proposal)].proposalText) //Require that this exact proposal does not already exist
-          proposals[keccak256(_proposal, msg.sender)] = Proposal({
-                                            memberAddress: msg.sender,
-                                            memberName: Boardmember[passwordHash].memberName,
-                                            deadlineBlock: block.number + deadline,
-                                            proposalText: _proposal
-                                            })};
-          BoardMember[passwordHash].membersProposals.push(proposals[keccak256(_proposal])
-   }
 
-   //vote yes or no to a proposal
-   function vote(_proposal, _password, voteTypeTrueUpFalseDown){
+    //Submit a proposal to the board
+    function propose(bytes32 proposal, bytes32 _password, uint deadline) //User inputs text for the proposal when calling this function as well as their password, and the number of blocks until deadline
+        {
+         bytes32 passwordHash;
         passwordHash = keccak256(_password, msg.sender);
+        //Require that this exact proposal does not already exist
+        require(keccak256(proposal) != proposals[keccak256(proposal)].proposalText);
+        proposals[keccak256(proposal, msg.sender)] = Proposal({
+                                                        memberAddress: msg.sender,
+                                                        memberName: boardMembers[passwordHash].memberName,
+                                                        deadlineBlock: block.number + deadline,
+                                                        proposalText: proposal
+                                                        });
+        BoardMember[passwordHash].membersProposals.push(proposals[keccak256(proposal)]);
+    }
+
+
+
+
+    //vote yes or no to a proposal
+    function vote(bytes32 proposal, bytes32 password, bool voteTypeTrueUpFalseDown){
+        uint256 passwordHash;
+        uint voteWeight;
+        passwordHash = keccak256(password, msg.sender);
         /*If approved proposal has less points than a late contrarian vote, initiate challenge, which re-opens voting*/
-        require(Proposal[keccak256(_proposal)].approved != true)
+        require(Proposal[keccak256(proposal)].approved != true);
         /*Require only one vote per member per proposal*/
         if(!voteTypeTrueUpFalseDown){
             voteWeight += boardMembers[passwordHash].voteWeight * -1;
-            proposals[_proposal].noVotes.push(msg.sender);
-        } else() {
+            proposals[proposal].noVotes.push(msg.sender);
+        } else {
             voteWeight += boardMembers[passwordHash].voteWeight;
-            proposals[_proposal].yesVotes.push(msg.sender);
+            proposals[proposal].yesVotes.push(msg.sender);
         }
-   }
+        
+        
+    }
 
-   function challenge(){
-     //Put a resolved proposal back on the table for another vote
+    //Put a resolved proposal back on the table for another vote
+    function challenge(bytes32 memberPassword){
      //Restrict to members who have more weight than proposal.score?
-     LogChallenge()
-   }
+     
+     require(msg.sender);
+     LogChallenge();
+    }
+
+
 
 }

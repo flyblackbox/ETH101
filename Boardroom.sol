@@ -8,15 +8,22 @@
 
 To Do:
 //Finish challenge function
-//Only allow challenge when remaining vote weight outweighs difference
-//Allow voting until weight vote is expired for that proposal*/
+//Enact a challenge when new vote weight outweighs difference
+
+-Upon deadline, proposal moves to approved if score > 0, or rejected if < 0.
+-Users can vote after the deadline, and if this causes the score to pass back over the 0 threshold, the proposal is sent back to the open proposals list with a new deadline and votes reset to 0.
+
+*/
 
 pragma solidity ^0.4.6;
 
 import "Stoppable.sol";
 
 contract Boardroom is Stopable {
-    address[] boardMembersArray; //Keep all boardmembers addresses in an array, in order of when they were added.
+    address[] boardMembersArray;            //Keep all boardmembers addresses in an array, in order of when they were added.
+    bytes32[] toVote;                       //Array of proposal hashes that are active
+    bytes32[] approved;                     //Proposals which have been approved
+    bytes32[] rejected;                     //Proposals which have been rejected
 
     function Boardroom(){
         boardMembersArray.push(msg.sender);
@@ -117,14 +124,14 @@ contract Boardroom is Stopable {
                                                           proposalText: proposal,
                                                           proposalHash: passwordHash,
                                                           approved: false,
-                                                          challenged: false,
-                                                          yesVotes: boardMembers[passwordHash].address,
+                                                          yesVotes: boardMembers[passwordHash].voteWeight,
                                                           noVotes: 0,
                                                           score: boardMembers[passwordHash].voteWeight
                                                           }
           //Track proposal keys in an array.
-          //BoardMember[passwordHash].membersProposals.push(proposals[keccak256(proposal)]);
-
+          BoardMember[passwordHash].membersProposals.push(proposals[keccak256(proposal)]);
+          proposalArray.push(passwordHash);
+          toVote.push(passwordHash);
         });
     }
 

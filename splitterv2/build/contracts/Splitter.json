@@ -1,0 +1,253 @@
+{
+  "contract_name": "Splitter",
+  "abi": [
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "receiver1",
+          "type": "address"
+        },
+        {
+          "name": "receiver2",
+          "type": "address"
+        }
+      ],
+      "name": "split",
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "payable": true,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [],
+      "name": "withdraw",
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "owner",
+      "outputs": [
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [],
+      "name": "killSwitch",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "rec",
+          "type": "address"
+        }
+      ],
+      "name": "getBalance",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "payable": false,
+      "type": "constructor"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "name": "sender",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "name": "receiver1",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "name": "receiver2",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "LogSplit",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "name": "success",
+          "type": "bool"
+        }
+      ],
+      "name": "LogWithdrawn",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [],
+      "name": "LogKillSwitch",
+      "type": "event"
+    }
+  ],
+  "unlinked_binary": "0x6060604052341561000f57600080fd5b5b60008054600160a060020a03191633600160a060020a03161790555b5b61039e8061003c6000396000f300606060405263ffffffff60e060020a6000350416630f2c932981146100505780633ccfd60b1461007e5780638da5cb5b146100a5578063ada14698146100d4578063f8b2cb4f146100e9575b600080fd5b61006a600160a060020a036004358116906024351661011a565b604051901515815260200160405180910390f35b341561008957600080fd5b61006a610236565b604051901515815260200160405180910390f35b34156100b057600080fd5b6100b86102ef565b604051600160a060020a03909116815260200160405180910390f35b34156100df57600080fd5b6100e76102fe565b005b34156100f457600080fd5b610108600160a060020a0360043516610353565b60405190815260200160405180910390f35b60003481901161012957600080fd5b600160a060020a038316158015906101495750600160a060020a03821615155b151561015457600080fd5b6002345b600160a060020a038516600090815260016020526040902080549290910490910190556002345b600160a060020a038416600090815260016020526040902080549290910490910190556002345b06600114156101d25760008054600160a060020a03168152600160208190526040909120805490910190555b7f5861cc23de8cab7630160dc0ee2c1e9aa2a0f1498f73c387807c0100e6684da733848434604051600160a060020a039485168152928416602084015292166040808301919091526060820192909252608001905180910390a15060015b92915050565b600160a060020a03331660009081526001602052604081205481811161025b57600080fd5b600160a060020a0333166000818152600160205260408082209190915582156108fc0290839051600060405180830381858888f19350505050151561029f57600080fd5b7f049d30cb9fafb7ac3e6101afc05fc7d2559d07ca8c86094bb1daf66453c0d62c336001604051600160a060020a039092168252151560208201526040908101905180910390a1600191505b5090565b600054600160a060020a031681565b60005433600160a060020a039081169116141561034f577fdf02591df2b0ef855e9dd964d8baee70cb5ade90c4bde8135bf4afe1412196d560405160405180910390a1600054600160a060020a0316ff5b5b5b565b600160a060020a0381166000908152600160205260409020545b9190505600a165627a7a72305820a42c4a7311ae783b91ca9f0325951051323ff17788911ad24f74b8ac8c980a5d0029",
+  "networks": {
+    "1504827307759": {
+      "events": {
+        "0x5861cc23de8cab7630160dc0ee2c1e9aa2a0f1498f73c387807c0100e6684da7": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "sender",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "receiver1",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "receiver2",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "amount",
+              "type": "uint256"
+            }
+          ],
+          "name": "LogSplit",
+          "type": "event"
+        },
+        "0x049d30cb9fafb7ac3e6101afc05fc7d2559d07ca8c86094bb1daf66453c0d62c": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "to",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "success",
+              "type": "bool"
+            }
+          ],
+          "name": "LogWithdrawn",
+          "type": "event"
+        },
+        "0xdf02591df2b0ef855e9dd964d8baee70cb5ade90c4bde8135bf4afe1412196d5": {
+          "anonymous": false,
+          "inputs": [],
+          "name": "LogKillSwitch",
+          "type": "event"
+        }
+      },
+      "links": {},
+      "address": "0x7d463f003b3330043f7006ec9bb2d0b9b483065f",
+      "updated_at": 1504827378200
+    },
+    "1504828235960": {
+      "events": {
+        "0x5861cc23de8cab7630160dc0ee2c1e9aa2a0f1498f73c387807c0100e6684da7": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "sender",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "receiver1",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "receiver2",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "amount",
+              "type": "uint256"
+            }
+          ],
+          "name": "LogSplit",
+          "type": "event"
+        },
+        "0x049d30cb9fafb7ac3e6101afc05fc7d2559d07ca8c86094bb1daf66453c0d62c": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "to",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "success",
+              "type": "bool"
+            }
+          ],
+          "name": "LogWithdrawn",
+          "type": "event"
+        },
+        "0xdf02591df2b0ef855e9dd964d8baee70cb5ade90c4bde8135bf4afe1412196d5": {
+          "anonymous": false,
+          "inputs": [],
+          "name": "LogKillSwitch",
+          "type": "event"
+        }
+      },
+      "links": {},
+      "address": "0xacf075e07649642fb3ebcda8f56b342988ae68fa",
+      "updated_at": 1504828259765
+    }
+  },
+  "schema_version": "0.0.5",
+  "updated_at": 1504828259765
+}

@@ -1,30 +1,41 @@
-import "truffle/Assert.sol";
-import "truffle/DeployedAddresses.sol";
-import "../contracts/Remittance.sol";
 const Remittance = artifacts.require("./Remittance.sol");
 
 contract('Remittance', function(accounts){
-
-  address owner;
-  uint fee;
-  uint feeBalance;
-  bytes32 keyHash;
-  
-  var contract;
-  var goal = 1000;
-  var duration = 10;
-  var owner = accounts[0];
-
+  var remittance;
 
   beforeEach (function() {
-    return Campaign.new(duration, goal, {from: owner})
+    return Remittance.deployed()
     .then(function(instance){
-      contract = instance;
+      remittance = instance;
     });
   });
 
-  it("should X", function() {
-    assert.strictEqual (true, true, "Something is wrong.");
+
+    it("should return remainder to owner", function(done){
+      splitter.split(web3.eth.accounts[1], web3.eth.accounts[1], {
+        value: 101,
+        from: web3.eth.accounts[0]
+      }).then(function(result){
+        return splitter.getBalance.call(web3.eth.accounts[0]);
+      }).then(function(balance){
+        assert.equal(balance, 1);
+        done();
+      });
+    });
+
+
+  it("Should have a deadline", function() {
+    assert.strictEqual (maxDeadline, 0, "Deadline was not set");
+  });
+});
+/*
+  it(“should have a deadline”, function(){
+  	return contract.deadline({from: owner})
+  	.then(function(_deadline) {
+  	assert.equal(_deadline).toString(10), expectedDeadline, “Deadline is incorrect”);
+  	});
+  });
+
 
 it("should do something and something else", function() {
     var instance;
@@ -46,12 +57,4 @@ it("should do something and something else", function() {
             // Do not return anything on the last callback or it will believe there is an error.
         });
 
-        //Add a test that calls split() and compares the before and after balances of Bob and Carol
-});
-
-it(“should have a deadline”, function(){
-	return contract.deadline({from: owner})
-	.then(function(_deadline) {
-	assert.equal(_deadline).toString(10), expectedDeadline, “Deadline is incorrect”);
-	});
-});
+        //Add a test that calls split() and compares the before and after balances of Bob and Carol*/

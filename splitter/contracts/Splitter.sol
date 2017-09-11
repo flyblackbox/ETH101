@@ -2,7 +2,6 @@ pragma solidity ^0.4.4;
 
 
 contract Splitter {
-
     address public owner;
     mapping(address => uint) balance;
 
@@ -17,16 +16,15 @@ contract Splitter {
     }
 
 //Setup event logs
-    event LogSplit(address sender, address receiver1, address receiver2, uint amount, string _msg);
-    event LogWithdrawn(address to, bool success, string _msg);
-    event LogKillSwitch(string _msg);
+    event LogSplit(address sender, address receiver1, address receiver2, uint amount);
+    event LogWithdrawn(address to, bool success);
+    event LogKillSwitch();
 
 //Create a payable function that splits value sent between two different accounts
     function split(address receiver1, address receiver2)
         public
         payable
         returns(bool) {
-
 //Require value being sent to the function, and the existence of two addresses input by the owner
         require(msg.value > 0);
         require(receiver1 != 0 && receiver2 !=0);
@@ -37,10 +35,10 @@ contract Splitter {
 
 //Return the remainder to the owner
         if(msg.value % 2 == 1){
-            balance[owner] += 1;
+            owner.send({value: 1});
         }
 
-        LogSplit(msg.sender, receiver1, receiver2, msg.value, "There has been a split");
+        LogSplit(msg.sender, receiver1, receiver2, msg.value);
 
         return true;
     }
@@ -67,7 +65,7 @@ contract Splitter {
 //should this balance be set to 0 before or after the transfer?
         balance[msg.sender] = 0;
         msg.sender.transfer(amount);
-        LogWithdrawn(msg.sender, true, "Owner has withdrawn");
+        LogWithdrawn(msg.sender, true);
 
       return true;
 
@@ -77,14 +75,8 @@ contract Splitter {
     function killSwitch()
         public
         isOwner {
-                    LogKillSwitch("The contract is killed");
+        LogKillSwitch();
         suicide(owner);
     }
 
-}
-/*
-contract Owned{
-  function Owned{
-//If I move the owner stuff here, how do I link it back to the other contract?
-  }
 }

@@ -1,8 +1,10 @@
-var ConvertLib = artifacts.require("./ConvertLib.sol");
-var MetaCoin = artifacts.require("./MetaCoin.sol");
+var Owned = artifacts.require("../contracts/Owned.sol")
+var Stoppable = artifacts.require("../contracts/Stoppable.sol");
+var Remittance = artifacts.require("../contracts/Remittance.sol");
+
 
 module.exports = function(deployer) {
-  deployer.deploy(ConvertLib);
-  deployer.link(ConvertLib, Remittance);
+  deployer.deploy(Owned);
+  deployer.deploy(Stoppable);
   deployer.deploy(Remittance);
 };
